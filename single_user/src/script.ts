@@ -1,23 +1,61 @@
+const UNITS = ["ct", "tsp", "tbsp", "cup", "pt", "qt", "gal", "oz", "lb"];
+
 class Ingredient {
   private _text: string;
+  private _amount: number;
+  private _units: string; // From UNITS.
 
   public constructor(text: string) {
     this._text = text;
+    this._amount = 1;
+    this._units = "cup";
   }
 
   /**
    * @return An HTMLElement displaying this ingredient.
    */
   public toHTML(): HTMLElement {
-    const textbox = document.createElement("input");
-    textbox.className = "ingredient-text";
-    textbox.type = "text";
-    textbox.value = this._text;
-    textbox.oninput = () => {
+    const div = document.createElement("div");
+    div.className = "ingredient-div";
+
+    const textIn = document.createElement("input");
+    textIn.className = "ingredient-text";
+    textIn.type = "text";
+    textIn.value = this._text;
+    textIn.oninput = () => {
       // Update the backing state when the text changes.
-      this._text = textbox.value;
+      this._text = textIn.value;
     };
-    return textbox;
+    div.appendChild(textIn);
+
+    const amountIn = document.createElement("input");
+    amountIn.className = "ingredient-amount";
+    amountIn.type = "number";
+    amountIn.min = "0";
+    amountIn.step = "0.1";
+    amountIn.value = this._amount + "";
+    amountIn.oninput = () => {
+      if (amountIn.value !== "") {
+        this._amount = parseFloat(amountIn.value);
+      }
+    };
+    div.appendChild(amountIn);
+
+    const unitsIn = document.createElement("select");
+    unitsIn.className = "inflexible";
+    for (const unit of UNITS) {
+      const option = document.createElement("option");
+      option.value = unit;
+      option.innerHTML = unit;
+      if (unit === this._units) option.selected = true;
+      unitsIn.appendChild(option);
+    }
+    unitsIn.onchange = () => {
+      this._units = unitsIn.value;
+    };
+    div.appendChild(unitsIn);
+
+    return div;
   }
 }
 
@@ -39,15 +77,15 @@ class Recipe {
     div.className = "recipe-div";
     // li.style.position = "relative";
     // Add input/display elements to li.
-    const textbox = document.createElement("input");
-    textbox.className = "recipe-input";
-    textbox.type = "text";
-    textbox.value = this._title;
-    textbox.oninput = () => {
+    const titleIn = document.createElement("input");
+    titleIn.className = "recipe-input";
+    titleIn.type = "text";
+    titleIn.value = this._title;
+    titleIn.oninput = () => {
       // Update the backing state when the text changes.
-      this._title = textbox.value;
+      this._title = titleIn.value;
     };
-    div.appendChild(textbox);
+    div.appendChild(titleIn);
     // Only allow editing after double click.
     // We accomplish this by overlaying a div unless it is
     // being edited.
@@ -56,9 +94,9 @@ class Recipe {
     overlayDiv.ondblclick = () => {
       console.log("dblclick");
       overlayDiv.hidden = true;
-      textbox.select(); // Select all
+      titleIn.select(); // Select all
     };
-    textbox.onblur = () => {
+    titleIn.onblur = () => {
       overlayDiv.hidden = false;
     };
     div.appendChild(overlayDiv);

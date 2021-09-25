@@ -21,20 +21,19 @@ h1, h2 {
   color: #e1e8f0;
 }
 
-.col-sm-4 {
+.col-sm-3 .col-sm-4 .col-sm-5 {
   margin-bottom: 20px;
+}
+
+.recipe-div {
+  flex: 1 1 auto;
+  position: relative;
 }
 
 .recipe-input {
   border: none;
   background: rgba(255, 255, 255, 0);
   width: 100%;
-}
-
-.recipe-div {
-  position: relative;
-  width: 100%;
-  height: 100%;
 }
 
 .overlay-div {
@@ -46,16 +45,27 @@ h1, h2 {
 }
 
 .item-div {
-  width: 100%;
-  height: 100%;
+  flex: 1 1 auto;
   display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ingredient-div {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
 .ingredient-text {
-  border: none;
-  background: rgba(255, 255, 255, 0);
   flex: 1 1 auto;
+  background: rgba(255, 255, 255, 0);
+}
+
+.ingredient-amount {
+  flex: 0 0 auto;
+  width: 60px;
 }
 
 .inflexible {
