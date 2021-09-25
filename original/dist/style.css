@@ -1,0 +1,26 @@
+body {
+  background-color: #6ed3cf;
+  font-family: "Lato";
+}
+
+h1, h2 {
+  margin-bottom: 20px;
+  font-family: "Pacifico";
+  color: #e62739;
+}
+
+.btn-purple {
+  text-transform: uppercase;
+  color: #e1e8f0;
+  background-color: #9068be;
+}
+
+#recipe-list li:hover {
+  cursor: pointer;
+  background-color: #9068be;
+  color: #e1e8f0;
+}
+
+.col-sm-4 {
+  margin-bottom: 20px;
+}

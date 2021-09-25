@@ -1,0 +1,18 @@
+.container
+	.row
+		.col-sm-4
+			h1 Recipes
+			ul.list-group#recipe-list
+		.col-sm-4
+			h1 Ingredients
+			ul.list-group#ingredient-list
+		.col-sm-4
+			form
+				h2 Title
+				input#title.form-control(type="text", placeholder="Samosas")
+				h2 Ingredients
+				span.tip Seperated by commas
+				br
+				input#ingredients.form-control(type="text", placeholder="Carrots, Potatoes, Peas, Masala")
+				br
+				button.btn.btn-purple#add Add

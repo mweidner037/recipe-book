@@ -1,0 +1,27 @@
+$grey: #e1e8f0;
+$cyan: #6ed3cf;
+$dark-orange: #e62739;
+$purple: #9068be;
+
+body {
+	background-color: $cyan;
+	font-family: 'Lato';
+}
+h1, h2 {
+	margin-bottom: 20px;
+	font-family: 'Pacifico';
+	color: $dark-orange;
+}
+.btn-purple{
+	text-transform: uppercase;
+	color: $grey;
+	background-color: $purple;
+}
+#recipe-list li:hover{
+	cursor: pointer;
+	background-color: $purple;
+	color: $grey;
+}
+.col-sm-4{
+	margin-bottom:20px;
+}
