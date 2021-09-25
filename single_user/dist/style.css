@@ -3,7 +3,8 @@ body {
   font-family: "Lato";
 }
 
-h1, h2 {
+h1,
+h2 {
   margin-bottom: 20px;
   font-family: "Pacifico";
   color: #e62739;
