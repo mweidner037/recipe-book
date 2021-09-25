@@ -1,0 +1,81 @@
+body {
+  background-color: #6ed3cf;
+  font-family: "Lato";
+}
+
+h1,
+h2 {
+  margin-bottom: 20px;
+  font-family: "Pacifico";
+  color: #e62739;
+}
+
+.btn-purple {
+  text-transform: uppercase;
+  color: #e1e8f0;
+  background-color: #9068be;
+}
+
+#recipe-list li:hover {
+  cursor: pointer;
+  background-color: #9068be;
+  color: #e1e8f0;
+}
+
+.col-sm-3 .col-sm-4 .col-sm-5 {
+  margin-bottom: 20px;
+}
+
+.recipe-div {
+  flex: 1 1 auto;
+  position: relative;
+}
+
+.recipe-input {
+  border: none;
+  background: rgba(255, 255, 255, 0);
+  width: 100%;
+}
+
+.overlay-div {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.item-div {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ingredient-div {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ingredient-text {
+  flex: 1 1 auto;
+  background: rgba(255, 255, 255, 0);
+}
+
+.ingredient-amount {
+  flex: 0 0 auto;
+  width: 60px;
+}
+
+.inflexible {
+  flex: 0 0 content;
+}
+
+.add-ingredient {
+  background-color: rgba(255, 255, 255, 0);
+  padding: 10px;
+  display: block;
+  font-size: 20px;
+}
