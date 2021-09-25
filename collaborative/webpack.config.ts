@@ -3,7 +3,6 @@ import * as webpack from "webpack";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import InlineChunkHtmlPlugin from "react-dev-utils/InlineChunkHtmlPlugin";
 import { CleanWebpackPlugin } from "clean-webpack-plugin";
-import CopyWebpackPlugin from "copy-webpack-plugin";
 
 const config: webpack.Configuration = {
   mode: "development",
@@ -31,20 +30,15 @@ const config: webpack.Configuration = {
         enforce: "pre",
         use: ["source-map-loader"],
       },
-      // If you include assets in your HTML file, uncomment
-      // the next rule and install html-loader as a devDependency,
-      // so that Webpack knows to include those assets.
-      // {
-      //   test: /\.(html)$/,
-      //   use: ["html-loader"],
-      // },
-      // Add loaders for other assets as needed, e.g., the
-      // next rule loads images.  "asset/inline" inlines
-      // them so you get a single .html file in the end.
-      // {
-      //   test: /\.(png|svg|jpg|jpeg|gif)$/i,
-      //   type: "asset/inline",
-      // },
+      {
+        test: /\.css$/i,
+        use: ["style-loader", "css-loader"],
+      },
+      // Fonts
+      {
+        test: /\.(woff2)$/i,
+        type: "asset/inline",
+      },
     ],
   },
   resolve: {
@@ -75,9 +69,6 @@ const config: webpack.Configuration = {
       cleanAfterEveryBuildPatterns: ["**/*.js"],
       cleanStaleWebpackAssets: false,
       protectWebpackAssets: false,
-    }),
-    new CopyWebpackPlugin({
-      patterns: [{ from: "src/style.css", to: "style.css" }],
     }),
   ],
 };

@@ -1,6 +1,10 @@
 import {} from "compoventuals";
 import { ContainerRuntimeSource } from "compoventuals-container";
 
+// Import CSS.
+import "./style.css";
+import "./google_fonts.css";
+
 const UNITS = ["ct", "tsp", "tbsp", "cup", "pt", "qt", "gal", "oz", "lb"];
 
 class Ingredient {
