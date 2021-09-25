@@ -41,7 +41,7 @@ class Recipe {
   public toHTML(): HTMLLIElement {
     const li = document.createElement("li");
     li.setAttribute("class", "list-group-item");
-    li.style.position = "relative";
+    // li.style.position = "relative";
     // Add input/display elements to li.
     const textbox = document.createElement("input");
     textbox.className = "text-input";
@@ -67,8 +67,6 @@ class Recipe {
     li.appendChild(overlayDiv);
     // Clicking the li displays the recipe.
     li.onclick = () => {
-      // Don't start editing text until double click.
-      // TODO
       this.updateIngredientsList();
     };
     return li;
@@ -81,6 +79,17 @@ class Recipe {
     for (let ingredient of this._ingredients) {
       ingredientList.appendChild(ingredient.toHTML());
     }
+    // "Add ingredient..." button.
+    const addButton = document.createElement("button");
+    addButton.innerHTML = "➕";
+    addButton.onclick = () => {
+      this._ingredients.push(new Ingredient(""));
+      this.updateIngredientsList();
+    };
+    const addButtonLi = document.createElement("li");
+    addButtonLi.className = "add-ingredient";
+    addButtonLi.appendChild(addButton);
+    ingredientList.appendChild(addButtonLi);
   }
 }
 
