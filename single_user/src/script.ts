@@ -32,11 +32,11 @@ class Recipe {
       .map((text) => new Ingredient(text));
   }
 
-  // Converts the current instance to a li html element with some css classes
+  // Converts the current instance to a html element with some css classes
   // Similar to toString(), but for html
-  public toHTML(): HTMLLIElement {
-    const li = document.createElement("li");
-    li.setAttribute("class", "list-group-item");
+  public toHTML(): HTMLElement {
+    const div = document.createElement("div");
+    div.className = "recipe-div";
     // li.style.position = "relative";
     // Add input/display elements to li.
     const textbox = document.createElement("input");
@@ -47,39 +47,37 @@ class Recipe {
       // Update the backing state when the text changes.
       this._title = textbox.value;
     };
-    li.appendChild(textbox);
+    div.appendChild(textbox);
     // Only allow editing after double click.
     // We accomplish this by overlaying a div unless it is
     // being edited.
     const overlayDiv = document.createElement("div");
     overlayDiv.className = "overlay-div";
     overlayDiv.ondblclick = () => {
+      console.log("dblclick");
       overlayDiv.hidden = true;
       textbox.select(); // Select all
     };
     textbox.onblur = () => {
       overlayDiv.hidden = false;
     };
-    li.appendChild(overlayDiv);
-    // Clicking the li displays the recipe.
-    li.onclick = () => {
-      this.updateIngredientsList();
-    };
-    return li;
+    div.appendChild(overlayDiv);
+    return div;
   }
 
   // When a recipe is clicked, update the ingredients table with each ingredient
-  private updateIngredientsList(): void {
+  public updateIngredientsList(): void {
     let ingredientList = document.getElementById("ingredient-list")!;
     ingredientList.innerHTML = "";
     for (let i = 0; i < this._ingredients.length; i++) {
       const div = document.createElement("div");
-      div.className = "ingredient-div";
+      div.className = "item-div";
 
       div.appendChild(this._ingredients[i].toHTML());
+
       // Delete ingredient button.
       const deleteButton = document.createElement("button");
-      deleteButton.className = "delete-ingredient";
+      deleteButton.className = "inflexible";
       deleteButton.innerHTML = "❌";
       deleteButton.onclick = () => {
         this._ingredients.splice(i, 1);
@@ -106,7 +104,7 @@ class Recipe {
   }
 }
 
-class RecipeBox {
+class RecipeBook {
   // App state
   private _list: Recipe[];
 
@@ -115,7 +113,7 @@ class RecipeBox {
       .getElementById("add")!
       .addEventListener("click", this.addRecipe.bind(this));
     this._list = [];
-    this.updateView(true);
+    this.updateView();
   }
 
   // Triggered on button click
@@ -127,21 +125,59 @@ class RecipeBox {
     let recipe: Recipe = new Recipe(titleElem.value, ingredientsElem.value);
 
     this._list.push(recipe);
-    this.updateView(false, recipe);
-
+    this.updateView();
     titleElem.value = "";
     ingredientsElem.value = "";
+    this.selectRecipe(recipe);
   }
 
   // Updates recipe html list
-  private updateView(initial: boolean, recipe?: Recipe) {
+  private updateView() {
     let table: HTMLElement = document.getElementById("recipe-list")!;
-    if (initial) {
-      for (let recipe of this._list) table.appendChild(recipe.toHTML());
-    } else {
-      table.appendChild(recipe!.toHTML());
+    table.innerHTML = "";
+    for (let i = 0; i < this._list.length; i++) {
+      const recipe = this._list[i];
+      const div = document.createElement("div");
+      div.className = "item-div";
+
+      div.appendChild(recipe.toHTML());
+
+      // Delete recipe button.
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "inflexible";
+      deleteButton.innerHTML = "❌";
+      deleteButton.onclick = (e) => {
+        this._list.splice(i, 1);
+        this.updateView();
+        document.getElementById("ingredient-list")!.innerHTML = "";
+        e.stopPropagation(); // Don't do li.onclick.
+      };
+      div.appendChild(deleteButton);
+
+      const li = document.createElement("li");
+      li.setAttribute("class", "list-group-item");
+      li.appendChild(div);
+      // Clicking the li displays the recipe.
+      li.onclick = () => {
+        this.selectRecipe(recipe);
+      };
+      // Highlight the selected recipe, and don't do the hover stuff.
+      if (recipe === this.selectedRecipe) {
+        li.style.cursor = "default";
+        li.style.backgroundColor = "#a0a0ff";
+        li.style.color = "black";
+      }
+      table.appendChild(li);
     }
+  }
+
+  private selectedRecipe: Recipe | null = null;
+  private selectRecipe(recipe: Recipe | null) {
+    if (recipe === this.selectedRecipe) return;
+    this.selectedRecipe = recipe;
+    this.updateView();
+    if (recipe !== null) recipe.updateIngredientsList();
   }
 }
 // Start app
-let app = new RecipeBox();
+let app = new RecipeBook();
