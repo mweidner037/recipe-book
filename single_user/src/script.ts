@@ -6,22 +6,18 @@ class Ingredient {
   }
 
   /**
-   * @return An <li> element displaying this ingredient.
+   * @return An HTMLElement displaying this ingredient.
    */
-  public toHTML(): HTMLLIElement {
-    const li = document.createElement("li");
-    li.setAttribute("class", "list-group-item");
-    // Add input/display elements to li.
+  public toHTML(): HTMLElement {
     const textbox = document.createElement("input");
-    textbox.className = "text-input";
+    textbox.className = "ingredient-text";
     textbox.type = "text";
     textbox.value = this._text;
     textbox.oninput = () => {
       // Update the backing state when the text changes.
       this._text = textbox.value;
     };
-    li.appendChild(textbox);
-    return li;
+    return textbox;
   }
 }
 
@@ -44,7 +40,7 @@ class Recipe {
     // li.style.position = "relative";
     // Add input/display elements to li.
     const textbox = document.createElement("input");
-    textbox.className = "text-input";
+    textbox.className = "recipe-input";
     textbox.type = "text";
     textbox.value = this._title;
     textbox.oninput = () => {
@@ -76,10 +72,27 @@ class Recipe {
   private updateIngredientsList(): void {
     let ingredientList = document.getElementById("ingredient-list")!;
     ingredientList.innerHTML = "";
-    for (let ingredient of this._ingredients) {
-      ingredientList.appendChild(ingredient.toHTML());
+    for (let i = 0; i < this._ingredients.length; i++) {
+      const div = document.createElement("div");
+      div.className = "ingredient-div";
+
+      div.appendChild(this._ingredients[i].toHTML());
+      // Delete ingredient button.
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "delete-ingredient";
+      deleteButton.innerHTML = "❌";
+      deleteButton.onclick = () => {
+        this._ingredients.splice(i, 1);
+        this.updateIngredientsList();
+      };
+      div.appendChild(deleteButton);
+
+      const li = document.createElement("li");
+      li.setAttribute("class", "list-group-item");
+      li.appendChild(div);
+      ingredientList.appendChild(li);
     }
-    // "Add ingredient..." button.
+    // Add ingredient button.
     const addButton = document.createElement("button");
     addButton.innerHTML = "➕";
     addButton.onclick = () => {
