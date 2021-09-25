@@ -1,5 +1,3 @@
-/* Simple typescript app that stores
- * recipes in local storage. */
 class Recipe {
   private _title: string;
   private _ingredients: string;
@@ -46,7 +44,6 @@ class RecipeBox {
       .getElementById("add")!
       .addEventListener("click", this.addRecipe.bind(this));
     this._list = [];
-    this.getLocal();
     this.updateView(true);
   }
 
@@ -59,32 +56,11 @@ class RecipeBox {
     let recipe: Recipe = new Recipe(titleElem.value, ingredientsElem.value);
 
     this._list.push(recipe);
-    this.updateLocal(this._list);
     this.updateView(false, recipe);
 
     titleElem.value = "";
     ingredientsElem.value = "";
   }
-
-  // Retreives saved recipes from local storage
-  // then converts to JSON and updates state
-  private getLocal() {
-    let local: any = localStorage.getItem("recipes");
-    local = JSON.parse(local);
-
-    if (!local) {
-      return;
-    }
-
-    for (let recipe of local) {
-      this._list.push(new Recipe(recipe._title, recipe._ingredients));
-    }
-  }
-
-  // Updates localStorage with current state
-  private updateLocal = (recipes: Recipe[]): void => {
-    localStorage.setItem("recipes", JSON.stringify(recipes));
-  };
 
   // Updates recipe html list
   private updateView(initial: boolean, recipe?: Recipe) {
