@@ -199,10 +199,12 @@ class RecipeBook {
       deleteButton.className = "inflexible";
       deleteButton.innerHTML = "❌";
       deleteButton.onclick = (e) => {
-        this._list.splice(i, 1);
-        this.renderRecipes();
-        document.getElementById("ingredient-list")!.innerHTML = "";
         e.stopPropagation(); // Don't do li.onclick.
+        this._list.splice(i, 1);
+        if (this._selectedRecipe === recipe) {
+          // Deselect it and stop showing it.
+          this.selectRecipe(null);
+        } else this.renderRecipes();
       };
       div.appendChild(deleteButton);
 
@@ -215,7 +217,7 @@ class RecipeBook {
       };
 
       // Highlight the selected recipe, and don't do the hover stuff.
-      if (recipe === this.selectedRecipe) {
+      if (recipe === this._selectedRecipe) {
         li.style.cursor = "default";
         li.style.backgroundColor = "#a0a0ff";
         li.style.color = "black";
@@ -225,12 +227,15 @@ class RecipeBook {
     }
   }
 
-  private selectedRecipe: Recipe | null = null;
+  private _selectedRecipe: Recipe | null = null;
   private selectRecipe(recipe: Recipe | null) {
-    if (recipe === this.selectedRecipe) return;
-    this.selectedRecipe = recipe;
+    if (recipe === this._selectedRecipe) return;
+    this._selectedRecipe = recipe;
     this.renderRecipes();
-    if (recipe !== null) recipe.renderIngredients();
+    if (recipe === null) {
+      // Show no recipe.
+      document.getElementById("ingredient-list")!.innerHTML = "";
+    } else recipe.renderIngredients();
   }
 }
 
