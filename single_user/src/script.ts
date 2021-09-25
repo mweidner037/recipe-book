@@ -5,7 +5,7 @@ class Ingredient {
   private _amount: number;
   private _units: string; // From UNITS.
 
-  public constructor(text: string) {
+  constructor(text: string) {
     this._text = text;
     this._amount = 1;
     this._units = "cup";
@@ -14,7 +14,7 @@ class Ingredient {
   /**
    * @return An HTMLElement displaying this ingredient.
    */
-  public toHTML(): HTMLElement {
+  toHTML(): HTMLElement {
     const div = document.createElement("div");
     div.className = "ingredient-div";
 
@@ -63,20 +63,21 @@ class Recipe {
   private _title: string;
   private _ingredients: Ingredient[];
 
-  public constructor(title: string, ingredients: string) {
+  constructor(title: string, ingredientsStr: string) {
     this._title = title;
-    this._ingredients = ingredients
+    this._ingredients = ingredientsStr
       .split(",")
       .map((text) => new Ingredient(text));
   }
 
-  // Converts the current instance to a html element with some css classes
-  // Similar to toString(), but for html
-  public toHTML(): HTMLElement {
+  /**
+   * @return An HTMLElement displaying this recipe for the
+   * recipe list (not the ingredients themselves).
+   */
+  toHTML(): HTMLElement {
     const div = document.createElement("div");
     div.className = "recipe-div";
-    // li.style.position = "relative";
-    // Add input/display elements to li.
+
     const titleIn = document.createElement("input");
     titleIn.className = "recipe-input";
     titleIn.type = "text";
@@ -86,13 +87,13 @@ class Recipe {
       this._title = titleIn.value;
     };
     div.appendChild(titleIn);
+
     // Only allow editing after double click.
     // We accomplish this by overlaying a div unless it is
     // being edited.
     const overlayDiv = document.createElement("div");
     overlayDiv.className = "overlay-div";
     overlayDiv.ondblclick = () => {
-      console.log("dblclick");
       overlayDiv.hidden = true;
       titleIn.select(); // Select all
     };
@@ -100,11 +101,14 @@ class Recipe {
       overlayDiv.hidden = false;
     };
     div.appendChild(overlayDiv);
+
     return div;
   }
 
-  // When a recipe is clicked, update the ingredients table with each ingredient
-  public updateIngredientsList(): void {
+  /**
+   * Renders this recipe in the "ingredient-list" element.
+   */
+  renderIngredients(): void {
     let ingredientList = document.getElementById("ingredient-list")!;
     ingredientList.innerHTML = "";
     for (let i = 0; i < this._ingredients.length; i++) {
@@ -119,21 +123,22 @@ class Recipe {
       deleteButton.innerHTML = "❌";
       deleteButton.onclick = () => {
         this._ingredients.splice(i, 1);
-        this.updateIngredientsList();
+        this.renderIngredients();
       };
       div.appendChild(deleteButton);
 
       const li = document.createElement("li");
-      li.setAttribute("class", "list-group-item");
+      li.className = "list-group-item";
       li.appendChild(div);
       ingredientList.appendChild(li);
     }
+
     // Add ingredient button.
     const addButton = document.createElement("button");
     addButton.innerHTML = "➕";
     addButton.onclick = () => {
       this._ingredients.push(new Ingredient(""));
-      this.updateIngredientsList();
+      this.renderIngredients();
     };
     const addButtonLi = document.createElement("li");
     addButtonLi.className = "add-ingredient";
@@ -143,7 +148,6 @@ class Recipe {
 }
 
 class RecipeBook {
-  // App state
   private _list: Recipe[];
 
   constructor() {
@@ -151,27 +155,37 @@ class RecipeBook {
       .getElementById("add")!
       .addEventListener("click", this.addRecipe.bind(this));
     this._list = [];
-    this.updateView();
+    this.renderRecipes();
   }
 
-  // Triggered on button click
-  // Inserts to localStorage, updates state and updates view
+  /**
+   * Listener for "add" button onclick.
+   *
+   * Adds a new recipe based on the recipe column input.
+   */
   private addRecipe(e: Event) {
     e.preventDefault();
-    let titleElem: any = document.getElementById("title");
-    let ingredientsElem: any = document.getElementById("ingredients");
-    let recipe: Recipe = new Recipe(titleElem.value, ingredientsElem.value);
 
+    const titleElem = <HTMLInputElement>document.getElementById("title");
+    const ingredientsElem = <HTMLInputElement>(
+      document.getElementById("ingredients")
+    );
+
+    const recipe: Recipe = new Recipe(titleElem.value, ingredientsElem.value);
     this._list.push(recipe);
-    this.updateView();
+
+    // Update display.
     titleElem.value = "";
     ingredientsElem.value = "";
+    this.renderRecipes();
     this.selectRecipe(recipe);
   }
 
-  // Updates recipe html list
-  private updateView() {
-    let table: HTMLElement = document.getElementById("recipe-list")!;
+  /**
+   * Renders the recipe titles in the "recipe-list" element.
+   */
+  private renderRecipes() {
+    const table = document.getElementById("recipe-list")!;
     table.innerHTML = "";
     for (let i = 0; i < this._list.length; i++) {
       const recipe = this._list[i];
@@ -186,25 +200,27 @@ class RecipeBook {
       deleteButton.innerHTML = "❌";
       deleteButton.onclick = (e) => {
         this._list.splice(i, 1);
-        this.updateView();
+        this.renderRecipes();
         document.getElementById("ingredient-list")!.innerHTML = "";
         e.stopPropagation(); // Don't do li.onclick.
       };
       div.appendChild(deleteButton);
 
       const li = document.createElement("li");
-      li.setAttribute("class", "list-group-item");
+      li.className = "list-group-item";
       li.appendChild(div);
       // Clicking the li displays the recipe.
       li.onclick = () => {
         this.selectRecipe(recipe);
       };
+
       // Highlight the selected recipe, and don't do the hover stuff.
       if (recipe === this.selectedRecipe) {
         li.style.cursor = "default";
         li.style.backgroundColor = "#a0a0ff";
         li.style.color = "black";
       }
+
       table.appendChild(li);
     }
   }
@@ -213,9 +229,10 @@ class RecipeBook {
   private selectRecipe(recipe: Recipe | null) {
     if (recipe === this.selectedRecipe) return;
     this.selectedRecipe = recipe;
-    this.updateView();
-    if (recipe !== null) recipe.updateIngredientsList();
+    this.renderRecipes();
+    if (recipe !== null) recipe.renderIngredients();
   }
 }
-// Start app
-let app = new RecipeBook();
+
+// Start app.
+new RecipeBook();
