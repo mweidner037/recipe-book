@@ -23,10 +23,6 @@ class Ingredient extends CObject {
   private _amount: LwwCRegister<number>;
   private _units: LwwCRegister<string>; // From UNITS.
 
-  private selectionStart: number | null = null;
-  private selectionEnd: number | null = null;
-  private focused = false;
-
   constructor(initToken: CrdtInitToken) {
     super(initToken);
 
@@ -50,14 +46,14 @@ class Ingredient extends CObject {
     textIn.className = "ingredient-text";
     textIn.type = "text";
     textIn.value = this._text.toString();
+    // Change the state on input.
     textIn.addEventListener("beforeinput", (e) =>
-      this.textInputHandler(e, textIn)
+      this.textInputHandler(textIn, e)
     );
-    this.trackSelection(textIn);
+    // TODO: cleanup old event listeners.  Likewise for recipe title.  Or, use the same DOM consistently.
+    // Keep the view in sync with the state.
+    this.setupTextListeners(textIn);
     div.appendChild(textIn);
-    if (this.focused) {
-      setTimeout(() => textIn.focus(), 0);
-    }
 
     const amountIn = document.createElement("input");
     amountIn.className = "ingredient-amount";
@@ -70,12 +66,17 @@ class Ingredient extends CObject {
         this._amount.value = parseFloat(amountIn.value);
       }
     };
+    this._amount.on("Set", () => {
+      amountIn.value = this._amount.value + "";
+    });
     div.appendChild(amountIn);
 
     const unitsIn = document.createElement("select");
     unitsIn.className = "inflexible";
+    const optionsByUnit = new Map<string, HTMLOptionElement>();
     for (const unit of UNITS) {
       const option = document.createElement("option");
+      optionsByUnit.set(unit, option);
       option.value = unit;
       option.innerHTML = unit;
       if (unit === this._units.value) option.selected = true;
@@ -84,101 +85,137 @@ class Ingredient extends CObject {
     unitsIn.onchange = () => {
       this._units.value = unitsIn.value;
     };
+    this._units.on("Set", () => {
+      optionsByUnit.get(this._units.value)!.selected = true;
+    });
     div.appendChild(unitsIn);
 
     return div;
   }
 
-  private trackSelection(textIn: HTMLInputElement) {
-    // Keep our own copy of the selection up-to-date with
-    // textIn's.
-    const updateSelection = () => {
-      // Need to do this on a delay because the event doesn't
-      // due its default action (updating the handler) until
-      // after the event handlers.
-      setTimeout(() => {
-        this.selectionStart = textIn.selectionStart;
-        this.selectionEnd = textIn.selectionEnd;
-      }, 0);
-    };
-    window.addEventListener("selectionchange", updateSelection);
-    textIn.addEventListener("mousedown", updateSelection);
-    textIn.addEventListener("mousemove", (e) => {
-      if (e.buttons === 1) updateSelection();
-    });
-    textIn.addEventListener("mouseclick", updateSelection);
-
-    // Same for this.focused.
-    textIn.onfocus = () => {
-      this.focused = true;
-    };
-    textIn.onblur = () => {
-      this.focused = false;
-    };
-  }
-
-  private textInputHandler(e: InputEvent, textIn: HTMLInputElement) {
+  /**
+   * Event handler for textIn beforeinput event.
+   * Translates the event into a corresponding operation on
+   * this._text.
+   */
+  private textInputHandler(textIn: HTMLInputElement, e: InputEvent) {
     // Update the backing state when the text changes.
     // Instead of letting the DOM update the text field,
     // we update it ourselves, so that we can capture
     // the intent of the edits in this._text.
-    // TODO: cursor management.
     e.preventDefault();
     if (textIn.selectionStart === null || textIn.selectionEnd === null) {
       // Not sure if it this is possible, but we will skip
       // just in case.
       return;
     }
-    this.selectionStart = textIn.selectionStart;
-    this.selectionEnd = textIn.selectionEnd;
     if (e.inputType.startsWith("insert") && e.data !== null) {
       // Delete any selected text, then insert new text.
       this._text.delete(
-        this.selectionStart,
-        this.selectionEnd - this.selectionStart
+        textIn.selectionStart,
+        textIn.selectionEnd - textIn.selectionStart
       );
-      this._text.insert(this.selectionStart, ...e.data);
-      // Move the cursor to the end of the new text.
-      this.setCursor(this.selectionStart + e.data.length);
+      this._text.insert(textIn.selectionStart, ...e.data);
     } else if (e.inputType.startsWith("delete")) {
-      if (this.selectionEnd === this.selectionStart) {
+      if (textIn.selectionEnd === textIn.selectionStart) {
         // Nothing is selected, delete next character.
         switch (e.inputType) {
           case "deleteContentForward":
-            if (this.selectionStart < this._text.length) {
-              this._text.delete(this.selectionStart);
-              // Restore the cursor.
-              this.setCursor(this.selectionStart);
+            if (textIn.selectionStart < this._text.length) {
+              this._text.delete(textIn.selectionStart);
             }
             break;
           case "deleteContentBackward":
-            if (this.selectionStart > 0) {
-              this._text.delete(this.selectionStart - 1);
-              // Move the cursor backwards.
-              this.setCursor(this.selectionStart - 1);
+            if (textIn.selectionStart > 0) {
+              this._text.delete(textIn.selectionStart - 1);
             }
             break;
         }
       } else {
         // Delete the selected text.
         this._text.delete(
-          this.selectionStart,
-          this.selectionEnd - this.selectionStart
+          textIn.selectionStart,
+          textIn.selectionEnd - textIn.selectionStart
         );
-        // Put the cursor at the start of the delete region.
-        this.setCursor(this.selectionStart);
       }
     }
   }
 
-  private setCursor(
-    newSelectionStart: number,
-    newSelectionEnd = newSelectionStart
-  ) {
-    this.selectionStart = newSelectionStart;
-    this.selectionEnd = newSelectionEnd;
+  /**
+   * Listens on this._text and propagates changes to textIn,
+   * being careful to preserve the user's selection.
+   */
+  private setupTextListeners(textIn: HTMLInputElement) {
+    this._text.on("Insert", (e) => {
+      // Record the selection before updating textIn.value,
+      // since doing so can mess with their values.
+      const oldSelectionStart = textIn.selectionStart;
+      const oldSelectionEnd = textIn.selectionEnd;
+
+      textIn.value = this._text.toString();
+      textIn.selectionStart = oldSelectionStart;
+      textIn.selectionEnd = oldSelectionEnd;
+
+      if (e.meta.isLocal) {
+        // Move the cursor to handle the local user's typing.
+        if (oldSelectionStart !== null) {
+          textIn.selectionStart = oldSelectionStart + e.count;
+          textIn.selectionEnd = textIn.selectionStart;
+        }
+      } else {
+        // If the insert is before a selection boundary, move
+        // the boundary forward.
+        if (
+          oldSelectionStart !== null &&
+          (e.startIndex < oldSelectionStart ||
+            (e.startIndex === oldSelectionStart &&
+              oldSelectionStart < oldSelectionEnd!))
+        ) {
+          textIn.selectionStart = oldSelectionStart + e.count;
+        }
+        if (oldSelectionEnd !== null && e.startIndex < oldSelectionEnd) {
+          textIn.selectionEnd = oldSelectionEnd + e.count;
+        }
+      }
+    });
+    this._text.on("Delete", (e) => {
+      // Record the selection before updating textIn.value,
+      // since doing so can mess with their values.
+      const oldSelectionStart = textIn.selectionStart;
+      const oldSelectionEnd = textIn.selectionEnd;
+
+      textIn.value = this._text.toString();
+      textIn.selectionStart = oldSelectionStart;
+      textIn.selectionEnd = oldSelectionEnd;
+
+      if (e.meta.isLocal) {
+        // Contract both cursors to the start of the deleted region.
+        textIn.selectionStart = e.startIndex;
+        textIn.selectionEnd = e.startIndex;
+      } else {
+        // If the delete is before or crosses a selection
+        // boundary, move the boundary backward.
+        if (oldSelectionStart !== null && e.startIndex < oldSelectionStart) {
+          textIn.selectionStart = Math.max(
+            e.startIndex,
+            oldSelectionStart - e.count
+          );
+        }
+        if (oldSelectionEnd !== null && e.startIndex < oldSelectionEnd) {
+          textIn.selectionEnd = Math.max(
+            e.startIndex,
+            oldSelectionEnd - e.count
+          );
+        }
+      }
+    });
   }
 }
+
+// TODO: re-rendering a recipe's ingredients will break any
+// of our edits to an ingredient, since it replaces the DOM.
+// Likewise with re-rendering the recipe list while we're
+// editing a recipe title.
 
 class Recipe extends CObject {
   private _title: LwwCRegister<string>;
@@ -192,6 +229,11 @@ class Recipe extends CObject {
       "ingredients",
       Pre(DeletingMutCList)((valueInitToken) => new Ingredient(valueInitToken))
     );
+
+    this._ingredients.on("Change", () => {
+      // Re-render the list of ingredients.
+      this.renderIngredients();
+    });
   }
 
   addInitialIngredients(ingredientsStr: string) {
@@ -218,8 +260,19 @@ class Recipe extends CObject {
       // Edits to the title are not committed right away,
       // only once the user is done editing.  Until then,
       // don't overwrite their edits with the stored value.
+      // TODO: doesn't make sense due to re-rendering
+      // (will forget our current edits and kick us out from
+      // editing).
       titleIn.value = this._title.value;
     }
+    this._title.on("Set", () => {
+      if (!this.editingTitle) {
+        // Edits to the title are not committed right away,
+        // only once the user is done editing.  Until then,
+        // don't overwrite their edits with the stored value.
+        titleIn.value = this._title.value;
+      }
+    });
     div.appendChild(titleIn);
 
     // Only allow editing after double click.
@@ -294,6 +347,7 @@ class RecipeBook extends CObject {
     document
       .getElementById("add")!
       .addEventListener("click", this.addRecipe.bind(this));
+
     this._list = this.addChild(
       "list",
       Pre(DeletingMutCList)(
@@ -305,6 +359,10 @@ class RecipeBook extends CObject {
         // Deselect the current recipe, since it was deleted.
         this.selectRecipe(null);
       }
+    });
+    this._list.on("Change", () => {
+      // Re-render the list of recipes.
+      this.renderRecipes();
     });
 
     this.renderRecipes();
@@ -378,26 +436,15 @@ class RecipeBook extends CObject {
     }
   }
 
-  /**
-   * Renders the selected recipe's ingredients.
-   */
-  private renderSelectedRecipe() {
-    if (this._selectedRecipe === null) {
-      // Show no recipe.
-      document.getElementById("ingredient-list")!.innerHTML = "";
-    } else this._selectedRecipe.renderIngredients();
-  }
-
-  renderAll() {
-    this.renderRecipes();
-    this.renderSelectedRecipe();
-  }
-
   private _selectedRecipe: Recipe | null = null;
   private selectRecipe(recipe: Recipe | null) {
     if (recipe === this._selectedRecipe) return;
     this._selectedRecipe = recipe;
-    this.renderAll();
+    this.renderRecipes();
+    if (recipe === null) {
+      // Show no recipe.
+      document.getElementById("ingredient-list")!.innerHTML = "";
+    } else recipe.renderIngredients();
   }
 }
 
@@ -407,7 +454,5 @@ class RecipeBook extends CObject {
   const runtime = await ContainerRuntimeSource.newRuntime(window.parent);
 
   // Start app.
-  const app = runtime.registerCrdt("app", Pre(RecipeBook)());
-  // Refresh the display when anything changes.
-  runtime.on("Change", () => app.renderAll());
+  runtime.registerCrdt("app", Pre(RecipeBook)());
 })();
