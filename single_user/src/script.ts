@@ -171,13 +171,12 @@ class RecipeBook {
       document.getElementById("ingredients")
     );
 
-    const recipe: Recipe = new Recipe(titleElem.value, ingredientsElem.value);
+    const recipe = new Recipe(titleElem.value, ingredientsElem.value);
     this._list.push(recipe);
 
     // Update display.
     titleElem.value = "";
     ingredientsElem.value = "";
-    this.renderRecipes();
     this.selectRecipe(recipe);
   }
 
