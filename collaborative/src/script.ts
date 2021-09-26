@@ -15,9 +15,6 @@ import "./google_fonts.css";
 // Main program.
 const UNITS = ["ct", "tsp", "tbsp", "cup", "pt", "qt", "gal", "oz", "lb"];
 
-// TODO: preserve DOM per object, so that it doesn't constantly
-// lose focus.
-
 class Ingredient extends CObject {
   private _text: CText;
   private _amount: LwwCRegister<number>;
@@ -58,8 +55,6 @@ class Ingredient extends CObject {
     textIn.addEventListener("beforeinput", (e) =>
       this.textInputHandler(textIn, e)
     );
-    // TODO: cleanup old event listeners.  Likewise for recipe title.  Or, use the same DOM consistently.
-    // Keep the view in sync with the state.
     this.setupTextListeners(textIn);
     div.appendChild(textIn);
 
@@ -220,19 +215,17 @@ class Ingredient extends CObject {
   }
 }
 
-// TODO: re-rendering a recipe's ingredients will break any
-// of our edits to an ingredient, since it replaces the DOM.
-// Likewise with re-rendering the recipe list while we're
-// editing a recipe title.
-
 class Recipe extends CObject {
   private _title: LwwCRegister<string>;
   private _ingredients: DeletingMutCList<Ingredient, []>;
 
   private _div: HTMLDivElement;
 
-  constructor(initToken: CrdtInitToken, title: string) {
+  private _recipeBook: RecipeBook;
+
+  constructor(initToken: CrdtInitToken, recipeBook: RecipeBook, title: string) {
     super(initToken);
+    this._recipeBook = recipeBook;
 
     this._title = this.addChild("title", Pre(LwwCRegister)(title));
     this._ingredients = this.addChild(
@@ -241,8 +234,10 @@ class Recipe extends CObject {
     );
 
     this._ingredients.on("Change", () => {
-      // Re-render the list of ingredients.
-      this.renderIngredients();
+      if (this._recipeBook.selectedRecipe === this) {
+        // Re-render the list of ingredients.
+        this.renderIngredients();
+      }
     });
 
     this._div = this.createDiv();
@@ -272,15 +267,7 @@ class Recipe extends CObject {
     const titleIn = document.createElement("input");
     titleIn.className = "recipe-input";
     titleIn.type = "text";
-    if (!this.editingTitle) {
-      // Edits to the title are not committed right away,
-      // only once the user is done editing.  Until then,
-      // don't overwrite their edits with the stored value.
-      // TODO: doesn't make sense due to re-rendering
-      // (will forget our current edits and kick us out from
-      // editing).
-      titleIn.value = this._title.value;
-    }
+    titleIn.value = this._title.value;
     this._title.on("Set", () => {
       if (!this.editingTitle) {
         // Edits to the title are not committed right away,
@@ -374,7 +361,7 @@ class RecipeBook extends CObject {
     this._list = this.addChild(
       "list",
       Pre(DeletingMutCList)(
-        (valueInitToken, title) => new Recipe(valueInitToken, title)
+        (valueInitToken, title) => new Recipe(valueInitToken, this, title)
       )
     );
     this._list.on("Delete", (e) => {
@@ -475,6 +462,10 @@ class RecipeBook extends CObject {
       // Show no recipe.
       document.getElementById("ingredient-list")!.innerHTML = "";
     } else recipe.renderIngredients();
+  }
+
+  get selectedRecipe(): Recipe | null {
+    return this._selectedRecipe;
   }
 }
 
