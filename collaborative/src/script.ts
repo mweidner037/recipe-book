@@ -23,12 +23,16 @@ class Ingredient extends CObject {
   private _amount: LwwCRegister<number>;
   private _units: LwwCRegister<string>; // From UNITS.
 
+  private _div: HTMLDivElement;
+
   constructor(initToken: CrdtInitToken) {
     super(initToken);
 
     this._text = this.addChild("text", Pre(CText)());
     this._amount = this.addChild("amount", Pre(LwwCRegister)(1));
     this._units = this.addChild("units", Pre(LwwCRegister)("cup"));
+
+    this._div = this.createDiv();
   }
 
   setInitialText(text: string) {
@@ -38,7 +42,11 @@ class Ingredient extends CObject {
   /**
    * @return An HTMLElement displaying this ingredient.
    */
-  toHTML(): HTMLElement {
+  toHTML() {
+    return this._div;
+  }
+
+  private createDiv(): HTMLDivElement {
     const div = document.createElement("div");
     div.className = "ingredient-div";
 
@@ -221,6 +229,8 @@ class Recipe extends CObject {
   private _title: LwwCRegister<string>;
   private _ingredients: DeletingMutCList<Ingredient, []>;
 
+  private _div: HTMLDivElement;
+
   constructor(initToken: CrdtInitToken, title: string) {
     super(initToken);
 
@@ -234,6 +244,8 @@ class Recipe extends CObject {
       // Re-render the list of ingredients.
       this.renderIngredients();
     });
+
+    this._div = this.createDiv();
   }
 
   addInitialIngredients(ingredientsStr: string) {
@@ -250,6 +262,10 @@ class Recipe extends CObject {
    * recipe list (not the ingredients themselves).
    */
   toHTML(): HTMLElement {
+    return this._div;
+  }
+
+  createDiv(): HTMLDivElement {
     const div = document.createElement("div");
     div.className = "recipe-div";
 
@@ -300,7 +316,10 @@ class Recipe extends CObject {
    * Renders this recipe in the "ingredient-list" element.
    */
   renderIngredients(): void {
-    let ingredientList = document.getElementById("ingredient-list")!;
+    const ingredientList = document.getElementById("ingredient-list")!;
+    // Preserve focus across this reset.
+    const focused = document.activeElement;
+
     ingredientList.innerHTML = "";
     for (let i = 0; i < this._ingredients.length; i++) {
       const div = document.createElement("div");
@@ -335,6 +354,10 @@ class Recipe extends CObject {
     addButtonLi.className = "add-ingredient";
     addButtonLi.appendChild(addButton);
     ingredientList.appendChild(addButtonLi);
+
+    if (focused !== null && focused instanceof HTMLElement) {
+      focused.focus();
+    }
   }
 }
 
@@ -395,6 +418,9 @@ class RecipeBook extends CObject {
    */
   private renderRecipes() {
     const table = document.getElementById("recipe-list")!;
+    // Preserve focus across this reset.
+    const focused = document.activeElement;
+
     table.innerHTML = "";
     for (let i = 0; i < this._list.length; i++) {
       const recipe = this._list.get(i);
@@ -433,6 +459,10 @@ class RecipeBook extends CObject {
       }
 
       table.appendChild(li);
+    }
+
+    if (focused !== null && focused instanceof HTMLElement) {
+      focused.focus();
     }
   }
 

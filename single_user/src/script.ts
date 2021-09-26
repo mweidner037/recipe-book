@@ -109,7 +109,7 @@ class Recipe {
    * Renders this recipe in the "ingredient-list" element.
    */
   renderIngredients(): void {
-    let ingredientList = document.getElementById("ingredient-list")!;
+    const ingredientList = document.getElementById("ingredient-list")!;
     ingredientList.innerHTML = "";
     for (let i = 0; i < this._ingredients.length; i++) {
       const div = document.createElement("div");
