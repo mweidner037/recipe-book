@@ -14,12 +14,22 @@ import "./google_fonts.css";
 import { connectTextInput } from "./connect_text_input";
 
 // Main program.
-const UNITS = ["ct", "tsp", "tbsp", "cup", "pt", "qt", "gal", "oz", "lb"];
+enum Unit {
+  CT = "ct",
+  TSP = "tsp",
+  TBSP = "tbsp",
+  CUP = "cup",
+  PT = "pt",
+  QT = "qt",
+  GAL = "gal",
+  OZ = "oz",
+  LB = "lb",
+}
 
 class Ingredient extends CObject {
   private _text: CText;
   private _amount: LwwCRegister<number>;
-  private _units: LwwCRegister<string>; // From UNITS.
+  private _units: LwwCRegister<Unit>;
 
   private _div: HTMLDivElement;
 
@@ -28,7 +38,7 @@ class Ingredient extends CObject {
 
     this._text = this.addChild("text", Pre(CText)());
     this._amount = this.addChild("amount", Pre(LwwCRegister)(1));
-    this._units = this.addChild("units", Pre(LwwCRegister)("cup"));
+    this._units = this.addChild("units", Pre(LwwCRegister)<Unit>(Unit.CUP));
 
     this._div = this.createDiv();
   }
@@ -74,7 +84,7 @@ class Ingredient extends CObject {
     const unitsIn = document.createElement("select");
     unitsIn.className = "inflexible";
     const optionsByUnit = new Map<string, HTMLOptionElement>();
-    for (const unit of UNITS) {
+    for (const unit of Object.values(Unit)) {
       const option = document.createElement("option");
       optionsByUnit.set(unit, option);
       option.value = unit;
@@ -83,7 +93,7 @@ class Ingredient extends CObject {
       unitsIn.appendChild(option);
     }
     unitsIn.onchange = () => {
-      this._units.value = unitsIn.value;
+      this._units.value = unitsIn.value as Unit;
     };
     this._units.on("Set", () => {
       optionsByUnit.get(this._units.value)!.selected = true;

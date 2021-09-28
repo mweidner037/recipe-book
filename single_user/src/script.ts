@@ -1,14 +1,24 @@
-const UNITS = ["ct", "tsp", "tbsp", "cup", "pt", "qt", "gal", "oz", "lb"];
+enum Unit {
+  CT = "ct",
+  TSP = "tsp",
+  TBSP = "tbsp",
+  CUP = "cup",
+  PT = "pt",
+  QT = "qt",
+  GAL = "gal",
+  OZ = "oz",
+  LB = "lb",
+}
 
 class Ingredient {
   private _text: string;
   private _amount: number;
-  private _units: string; // From UNITS.
+  private _units: Unit;
 
   constructor(text: string) {
     this._text = text;
     this._amount = 1;
-    this._units = "cup";
+    this._units = Unit.CUP;
   }
 
   /**
@@ -43,7 +53,7 @@ class Ingredient {
 
     const unitsIn = document.createElement("select");
     unitsIn.className = "inflexible";
-    for (const unit of UNITS) {
+    for (const unit of Object.values(Unit)) {
       const option = document.createElement("option");
       option.value = unit;
       option.innerHTML = unit;
@@ -51,7 +61,7 @@ class Ingredient {
       unitsIn.appendChild(option);
     }
     unitsIn.onchange = () => {
-      this._units = unitsIn.value;
+      this._units = unitsIn.value as Unit;
     };
     div.appendChild(unitsIn);
 
