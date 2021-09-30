@@ -47,6 +47,11 @@ class Ingredient extends CObject {
     this._text.insert(0, ...text);
   }
 
+  scale(scale: number) {
+    // TODO: also affect concurrent sets
+    this._amount.value *= scale;
+  }
+
   /**
    * @return An HTMLElement displaying this ingredient.
    */
@@ -230,6 +235,23 @@ class Recipe extends CObject {
     addButtonLi.className = "add-ingredient";
     addButtonLi.appendChild(addButton);
     ingredientList.appendChild(addButtonLi);
+
+    // Scale recipe button.
+    const scaleButton = document.createElement("button");
+    scaleButton.innerHTML = "Scale Recipe...";
+    scaleButton.onclick = () => {
+      const prompted = prompt("Scale Recipe Factor", "2");
+      if (prompted === null) return;
+      const scale = parseFloat(prompted);
+      if (isNaN(scale) || scale <= 0) return;
+      // TODO: proper forEach (also affect concurrent)
+      this._ingredients.forEach((ingredient) => ingredient.scale(scale));
+      this.renderIngredients();
+    };
+    const scaleLi = document.createElement("li");
+    scaleLi.className = "scale-recipe";
+    scaleLi.appendChild(scaleButton);
+    ingredientList.appendChild(scaleLi);
 
     if (focused !== null && focused instanceof HTMLElement) {
       focused.focus();
