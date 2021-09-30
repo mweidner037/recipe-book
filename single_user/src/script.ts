@@ -21,6 +21,10 @@ class Ingredient {
     this._units = Unit.CUP;
   }
 
+  scale(scale: number) {
+    this._amount *= scale;
+  }
+
   /**
    * @return An HTMLElement displaying this ingredient.
    */
@@ -154,6 +158,22 @@ class Recipe {
     addButtonLi.className = "add-ingredient";
     addButtonLi.appendChild(addButton);
     ingredientList.appendChild(addButtonLi);
+
+    // Scale recipe button.
+    const scaleButton = document.createElement("button");
+    scaleButton.innerHTML = "Scale Recipe...";
+    scaleButton.onclick = () => {
+      const prompted = prompt("Scale Recipe Factor", "2");
+      if (prompted === null) return;
+      const scale = parseFloat(prompted);
+      if (isNaN(scale) || scale <= 0) return;
+      this._ingredients.forEach((ingredient) => ingredient.scale(scale));
+      this.renderIngredients();
+    };
+    const scaleLi = document.createElement("li");
+    scaleLi.className = "scale-recipe";
+    scaleLi.appendChild(scaleButton);
+    ingredientList.appendChild(scaleLi);
   }
 }
 
