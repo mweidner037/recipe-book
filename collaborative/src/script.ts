@@ -12,6 +12,7 @@ import { ContainerRuntimeSource } from "compoventuals-container";
 import "./style.css";
 import "./google_fonts.css";
 import { connectTextInput } from "./connect_text_input";
+import { MultableCRegister } from "./amount_register";
 
 // Main program.
 enum Unit {
@@ -28,7 +29,7 @@ enum Unit {
 
 class Ingredient extends CObject {
   private _text: CText;
-  private _amount: LwwCRegister<number>;
+  private _amount: MultableCRegister;
   private _units: LwwCRegister<Unit>;
 
   private _div: HTMLDivElement;
@@ -37,7 +38,7 @@ class Ingredient extends CObject {
     super(initToken);
 
     this._text = this.addChild("text", Pre(CText)());
-    this._amount = this.addChild("amount", Pre(LwwCRegister)(1));
+    this._amount = this.addChild("amount", Pre(MultableCRegister)(1));
     this._units = this.addChild("units", Pre(LwwCRegister)<Unit>(Unit.CUP));
 
     this._div = this.createDiv();
@@ -49,7 +50,7 @@ class Ingredient extends CObject {
 
   scale(scale: number) {
     // TODO: also affect concurrent sets
-    this._amount.value *= scale;
+    this._amount.mult(scale);
   }
 
   /**
@@ -75,13 +76,13 @@ class Ingredient extends CObject {
     amountIn.type = "number";
     amountIn.min = "0";
     amountIn.step = "0.1";
-    amountIn.value = this._amount + "";
+    amountIn.value = this._amount.value + "";
     amountIn.oninput = () => {
       if (amountIn.value !== "") {
         this._amount.value = parseFloat(amountIn.value);
       }
     };
-    this._amount.on("Set", () => {
+    this._amount.on("Change", () => {
       amountIn.value = this._amount.value + "";
     });
     div.appendChild(amountIn);
@@ -244,7 +245,7 @@ class Recipe extends CObject {
       if (prompted === null) return;
       const scale = parseFloat(prompted);
       if (isNaN(scale) || scale <= 0) return;
-      // TODO: proper forEach (also affect concurrent)
+      // TODO: proper forEach (also affect concurrent).
       this._ingredients.forEach((ingredient) => ingredient.scale(scale));
       this.renderIngredients();
     };
