@@ -4,21 +4,12 @@
     <meta charset="UTF-8" />
     <title>Simple TypeScript Recipe Book App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- CSS included in script.ts. -->
-    <link
-      href="https://fonts.googleapis.com/css?family=Roboto|Lato|Pacifico|Lobster|Open+Sans"
-      rel="stylesheet"
-      type="text/css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
-    />
+    <!-- CSS, fonts included in script.ts. -->
   </head>
   <body>
     <div class="container">
       <div class="row">
-        <div class="col-sm-3">
+        <div class="col-sm-4">
           <h1>Recipes</h1>
           <ul class="list-group" id="recipe-list"></ul>
         </div>
@@ -26,11 +17,11 @@
           <h1>Ingredients</h1>
           <ul class="list-group" id="ingredient-list"></ul>
         </div>
-        <div class="col-sm-4">
+        <div class="col-sm-3">
           <form>
             <h2>Title</h2>
             <input
-              class="form-control"
+              class="form-control form-control-lg large-input"
               id="title"
               type="text"
               placeholder="Samosas"
@@ -38,7 +29,7 @@
             <h2>Ingredients</h2>
             <span class="tip">Separated by commas</span><br />
             <input
-              class="form-control"
+              class="form-control form-control-lg large-input"
               id="ingredients"
               type="text"
               placeholder="Carrots, Potatoes, Peas, Masala"

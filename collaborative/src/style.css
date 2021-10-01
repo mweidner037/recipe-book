@@ -1,6 +1,7 @@
 body {
   background-color: #6ed3cf;
   font-family: "Lato";
+  font-size: 28px;
 }
 
 h1,
@@ -8,6 +9,10 @@ h2 {
   margin-bottom: 20px;
   font-family: "Pacifico";
   color: #e62739;
+}
+
+.large-input {
+  font-size: 28px;
 }
 
 .btn-purple {
@@ -62,6 +67,7 @@ h2 {
 .ingredient-text {
   flex: 1 1 auto;
   background: rgba(255, 255, 255, 0);
+  width: 200px;
 }
 
 .ingredient-amount {
@@ -77,7 +83,7 @@ h2 {
   background-color: rgba(255, 255, 255, 0);
   padding: 10px;
   display: block;
-  font-size: 20px;
+  font-size: 40px;
 }
 
 .scale-recipe {

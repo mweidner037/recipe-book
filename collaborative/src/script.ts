@@ -7,12 +7,15 @@ import {
   Pre,
 } from "compoventuals";
 import { ContainerRuntimeSource } from "compoventuals-container";
-
-// Import CSS.
-import "./style.css";
-import "./google_fonts.css";
 import { connectTextInput } from "./connect_text_input";
 import { MultableCRegister } from "./amount_register";
+
+// Import CSS and fonts.
+import "./google_fonts.css";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "./fonts/FwZY7-Qmy14u9lezJ-6H6Mk.woff2";
+import "./fonts/S6uyw4BMUTPHjx4wXg.woff2";
+import "./style.css";
 
 // Main program.
 enum Unit {

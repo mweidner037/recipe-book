@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "bootstrap": "^5.1.1",
     "compoventuals": "file:../../compoventuals/main",
     "compoventuals-container": "file:../../compoventuals/container"
   },
