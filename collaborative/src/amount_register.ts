@@ -10,7 +10,7 @@ import {
   LwwMutCRegister,
   Pre,
   SemidirectProductStore,
-} from "compoventuals";
+} from "@collabs/collabs";
 
 // TODO: deal with floating point non-commutativity
 class MultNumber extends CPrimitive {

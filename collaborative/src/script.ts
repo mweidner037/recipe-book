@@ -5,8 +5,8 @@ import {
   DeletingMutCList,
   LwwCRegister,
   Pre,
-} from "compoventuals";
-import { ContainerRuntimeSource } from "compoventuals-container";
+} from "@collabs/collabs";
+import { ContainerRuntimeSource } from "@collabs/container";
 import { connectTextInput } from "./connect_text_input";
 import { MultableCRegister } from "./amount_register";
 

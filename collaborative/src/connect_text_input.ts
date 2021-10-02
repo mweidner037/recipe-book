@@ -1,4 +1,4 @@
-import { CText } from "compoventuals";
+import { CText } from "@collabs/collabs";
 
 export function connectTextInput(textState: CText, textIn: HTMLInputElement) {
   // Controller -> Model.
