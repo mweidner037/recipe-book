@@ -117,6 +117,9 @@ class Recipe extends CObject {
   private _title: LwwCRegister<string>;
   private _ingredients: DeletingMutCList<Ingredient, []>;
 
+  // This is saved across re-renders to preserve its value.
+  private readonly scaleIn: HTMLInputElement;
+
   private _div: HTMLDivElement;
 
   private _recipeBook: RecipeBook;
@@ -137,6 +140,13 @@ class Recipe extends CObject {
         this.renderIngredients();
       }
     });
+
+    this.scaleIn = document.createElement("input");
+    this.scaleIn.className = "ingredient-amount";
+    this.scaleIn.type = "number";
+    this.scaleIn.min = "0.01";
+    this.scaleIn.step = "0.1";
+    this.scaleIn.value = "2";
 
     this._div = this.createDiv();
   }
@@ -242,19 +252,19 @@ class Recipe extends CObject {
 
     // Scale recipe button.
     const scaleButton = document.createElement("button");
-    scaleButton.innerHTML = "Scale Recipe...";
+    scaleButton.innerHTML = "Scale Recipe";
     scaleButton.onclick = () => {
-      const prompted = prompt("Scale Recipe Factor", "2");
-      if (prompted === null) return;
-      const scale = parseFloat(prompted);
+      const scale = parseFloat(this.scaleIn.value);
       if (isNaN(scale) || scale <= 0) return;
-      // TODO: proper forEach (also affect concurrent).
+      // TODO: Proper list foreach, that also affects
+      // concurrently added ingredients.
       this._ingredients.forEach((ingredient) => ingredient.scale(scale));
       this.renderIngredients();
     };
     const scaleLi = document.createElement("li");
     scaleLi.className = "scale-recipe";
     scaleLi.appendChild(scaleButton);
+    scaleLi.appendChild(this.scaleIn);
     ingredientList.appendChild(scaleLi);
 
     if (focused !== null && focused instanceof HTMLElement) {

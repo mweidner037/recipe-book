@@ -77,11 +77,21 @@ class Recipe {
   private _title: string;
   private _ingredients: Ingredient[];
 
+  // This is saved across re-renders to preserve its value.
+  private readonly scaleIn: HTMLInputElement;
+
   constructor(title: string, ingredientsStr: string) {
     this._title = title;
     this._ingredients = ingredientsStr
       .split(",")
       .map((text) => new Ingredient(text));
+
+    this.scaleIn = document.createElement("input");
+    this.scaleIn.className = "ingredient-amount";
+    this.scaleIn.type = "number";
+    this.scaleIn.min = "0.01";
+    this.scaleIn.step = "0.1";
+    this.scaleIn.value = "2";
   }
 
   /**
@@ -161,11 +171,9 @@ class Recipe {
 
     // Scale recipe button.
     const scaleButton = document.createElement("button");
-    scaleButton.innerHTML = "Scale Recipe...";
+    scaleButton.innerHTML = "Scale Recipe";
     scaleButton.onclick = () => {
-      const prompted = prompt("Scale Recipe Factor", "2");
-      if (prompted === null) return;
-      const scale = parseFloat(prompted);
+      const scale = parseFloat(this.scaleIn.value);
       if (isNaN(scale) || scale <= 0) return;
       this._ingredients.forEach((ingredient) => ingredient.scale(scale));
       this.renderIngredients();
@@ -173,6 +181,7 @@ class Recipe {
     const scaleLi = document.createElement("li");
     scaleLi.className = "scale-recipe";
     scaleLi.appendChild(scaleButton);
+    scaleLi.appendChild(this.scaleIn);
     ingredientList.appendChild(scaleLi);
   }
 }
