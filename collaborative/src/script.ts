@@ -1,12 +1,12 @@
 import {
   CObject,
-  CrdtInitToken,
+  InitToken,
   CText,
   DeletingMutCList,
   LwwCRegister,
   Pre,
 } from "@collabs/collabs";
-import { ContainerRuntimeSource } from "@collabs/container";
+import { ContainerAppSource } from "@collabs/container";
 import { connectTextInput } from "./connect_text_input";
 import { MultableCRegister } from "./amount_register";
 
@@ -37,7 +37,7 @@ class Ingredient extends CObject {
 
   private _div: HTMLDivElement;
 
-  constructor(initToken: CrdtInitToken) {
+  constructor(initToken: InitToken) {
     super(initToken);
 
     this._text = this.addChild("text", Pre(CText)());
@@ -85,7 +85,7 @@ class Ingredient extends CObject {
         this._amount.value = parseFloat(amountIn.value);
       }
     };
-    this._amount.on("Change", () => {
+    this._amount.on("Any", () => {
       amountIn.value = this._amount.value + "";
     });
     div.appendChild(amountIn);
@@ -124,7 +124,7 @@ class Recipe extends CObject {
 
   private _recipeBook: RecipeBook;
 
-  constructor(initToken: CrdtInitToken, recipeBook: RecipeBook, title: string) {
+  constructor(initToken: InitToken, recipeBook: RecipeBook, title: string) {
     super(initToken);
     this._recipeBook = recipeBook;
 
@@ -134,7 +134,7 @@ class Recipe extends CObject {
       Pre(DeletingMutCList)((valueInitToken) => new Ingredient(valueInitToken))
     );
 
-    this._ingredients.on("Change", () => {
+    this._ingredients.on("Any", () => {
       if (this._recipeBook.selectedRecipe === this) {
         // Re-render the list of ingredients.
         this.renderIngredients();
@@ -276,7 +276,7 @@ class Recipe extends CObject {
 class RecipeBook extends CObject {
   private _list: DeletingMutCList<Recipe, [title: string]>;
 
-  constructor(initToken: CrdtInitToken) {
+  constructor(initToken: InitToken) {
     super(initToken);
 
     document
@@ -295,7 +295,7 @@ class RecipeBook extends CObject {
         this.selectRecipe(null);
       }
     });
-    this._list.on("Change", () => {
+    this._list.on("Any", () => {
       // Re-render the list of recipes.
       this.renderRecipes();
     });
@@ -394,11 +394,11 @@ class RecipeBook extends CObject {
   }
 }
 
-// Async so we can await ContainerRuntimeSource.newRuntime.
+// Async so we can await ContainerAppSource.newRuntime.
 (async function () {
-  // Create a Runtime intended for use within containers.
-  const runtime = await ContainerRuntimeSource.newRuntime(window.parent);
+  // Create a CRDTApp intended for use within containers.
+  const app = await ContainerAppSource.newApp(window.parent);
 
   // Start app.
-  runtime.registerCrdt("app", Pre(RecipeBook)());
+  app.registerCollab("app", Pre(RecipeBook)());
 })();

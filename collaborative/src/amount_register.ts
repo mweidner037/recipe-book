@@ -1,31 +1,34 @@
 import {
-  CausalTimestamp,
   CMessenger,
   CObject,
   CPrimitive,
-  CrdtEventMeta,
-  CrdtInitToken,
+  InitToken,
   CRegister,
-  DefaultElementSerializer,
+  DefaultSerializer,
   LwwMutCRegister,
   Pre,
   SemidirectProductStore,
+  MessageMeta,
+  CRDTMessageMeta,
+  Serializer,
+  RunLocallyLayer,
+  PublicCObject,
 } from "@collabs/collabs";
 
 // TODO: deal with floating point non-commutativity
 class MultNumber extends CPrimitive {
   private _value: number;
-  private readonly numberSerializer =
-    DefaultElementSerializer.getInstance<number>();
+  private readonly numberSerializer: Serializer<number>;
 
-  constructor(initToken: CrdtInitToken, initialValue: number) {
+  constructor(initToken: InitToken, initialValue: number) {
     super(initToken);
+    this.numberSerializer = DefaultSerializer.getInstance<number>(this.runtime);
     this._value = initialValue;
   }
 
   mult(toMult: number) {
     if (toMult !== 1) {
-      super.send(this.numberSerializer.serialize(toMult));
+      super.sendPrimitive(this.numberSerializer.serialize(toMult));
     }
   }
 
@@ -33,44 +36,49 @@ class MultNumber extends CPrimitive {
     return this._value;
   }
 
-  protected receivePrimitive(timestamp: CausalTimestamp, message: Uint8Array) {
-    let decoded = this.numberSerializer.deserialize(message, this.runtime);
+  protected receivePrimitive(message: Uint8Array | string, meta: MessageMeta) {
+    let decoded = this.numberSerializer.deserialize(<Uint8Array>message);
     this._value *= decoded;
-    this.emit("Change", { meta: CrdtEventMeta.fromTimestamp(timestamp) });
+    this.emit("Any", { meta });
   }
 
-  canGc(): boolean {
+  canGC(): boolean {
     return false;
   }
 
-  savePrimitive(): Uint8Array {
+  save(): Uint8Array {
     return this.numberSerializer.serialize(this._value);
   }
 
-  loadPrimitive(saveData: Uint8Array) {
-    this._value = this.numberSerializer.deserialize(saveData, this.runtime);
+  load(saveData: Uint8Array | null) {
+    if (saveData === null) return;
+    this._value = this.numberSerializer.deserialize(saveData);
   }
 }
 
 export class MultableCRegister extends CObject implements CRegister<number> {
+  private readonly runLocallyLayer: RunLocallyLayer;
   // TODO: set an initial value in mutRegister instead.
   private readonly initialMultNumber: MultNumber;
   private readonly mutRegister: LwwMutCRegister<MultNumber, [number]>;
   private readonly semidirectStore: SemidirectProductStore<number, number>;
   private readonly multMessenger: CMessenger<number>;
 
-  constructor(initToken: CrdtInitToken, initialValue: number) {
+  constructor(initToken: InitToken, initialValue: number) {
     super(initToken);
 
-    this.initialMultNumber = this.addChild(
+    this.runLocallyLayer = this.addChild("", Pre(RunLocallyLayer)());
+    const internalCObject = this.runLocallyLayer.setChild(Pre(PublicCObject)());
+
+    this.initialMultNumber = internalCObject.addChild(
       "initial",
       Pre(MultNumber)(initialValue)
     );
-    this.mutRegister = this.addChild(
+    this.mutRegister = internalCObject.addChild(
       "",
       Pre(LwwMutCRegister)((valueInitToken, initialValue) => {
         const multNumber = new MultNumber(valueInitToken, initialValue);
-        multNumber.on("Change", (e) => this.emit("Change", e));
+        multNumber.on("Any", (e) => this.emit("Any", e));
         return multNumber;
       })
     );
@@ -84,14 +92,17 @@ export class MultableCRegister extends CObject implements CRegister<number> {
     this.mutRegister.on("Set", (e) => {
       // Act on the newly set value.
       const multNumber = this.mutRegister.value.get();
-      const factor = this.semidirectStore.processM1(1, e.meta.timestamp)!;
-      this.runtime.runLocally(() => multNumber.mult(factor));
+      const factor = this.semidirectStore.processM1(
+        1,
+        CRDTMessageMeta.from(e.meta)
+      )!;
+      this.runLocallyLayer.runLocally(e.meta, () => multNumber.mult(factor));
     });
     this.multMessenger.on("Message", (e) => {
       // Store the message.
-      this.semidirectStore.processM2(e.message, e.meta.timestamp);
+      this.semidirectStore.processM2(e.message, CRDTMessageMeta.from(e.meta));
       // Act on all current values.
-      this.runtime.runLocally(() => {
+      this.runLocallyLayer.runLocally(e.meta, () => {
         this.initialMultNumber.mult(e.message);
         this.mutRegister
           .conflicts()
@@ -100,8 +111,8 @@ export class MultableCRegister extends CObject implements CRegister<number> {
     });
 
     // Emit events.
-    this.initialMultNumber.on("Change", (e) => this.emit("Change", e));
-    this.mutRegister.on("Change", (e) => this.emit("Change", e));
+    this.initialMultNumber.on("Any", (e) => this.emit("Any", e));
+    this.mutRegister.on("Any", (e) => this.emit("Any", e));
   }
 
   private action(m2: number, m1: number): number {

@@ -76,7 +76,7 @@ function setupTextListeners(textState: CText, textIn: HTMLInputElement) {
     textIn.selectionStart = oldSelectionStart;
     textIn.selectionEnd = oldSelectionEnd;
 
-    if (e.meta.isLocal) {
+    if (e.meta.isLocalEcho) {
       // Move the cursor to handle the local user's typing.
       if (oldSelectionStart !== null) {
         textIn.selectionStart = oldSelectionStart + e.count;
@@ -108,7 +108,7 @@ function setupTextListeners(textState: CText, textIn: HTMLInputElement) {
     textIn.selectionStart = oldSelectionStart;
     textIn.selectionEnd = oldSelectionEnd;
 
-    if (e.meta.isLocal) {
+    if (e.meta.isLocalEcho) {
       // Contract both cursors to the start of the deleted region.
       textIn.selectionStart = e.startIndex;
       textIn.selectionEnd = e.startIndex;

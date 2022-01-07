@@ -1,6 +1,6 @@
 # Recipe Book
 
-Demo of [Collabs](https://www.npmjs.com/package/@collabs/collabs) that includes a single-user and its collaborative version side-by-side.
+Demo of [Collabs](https://www.npmjs.com/package/@collabs/collabs) that includes a single-user app and its collaborative version side-by-side.
 
 ## Projects
 
